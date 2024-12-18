@@ -11,6 +11,12 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        wine: "var(--wine)",
+        salmon: {
+          light: "var(--salmon-light)",
+          DEFAULT: "var(--salmon-default)",
+          dark: "var(--salmon-dark)"
+        }
       },
     },
   },
