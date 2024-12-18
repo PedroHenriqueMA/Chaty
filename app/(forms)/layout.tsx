@@ -1,11 +1,3 @@
-import { Inter } from "next/font/google";
-import Image from "next/image";
-
-const inter = Inter({
-  weight: "400",
-  subsets: ["latin"]
-})
-
 export default function RootLayout({
   children,
 }: Readonly<{
