@@ -1,17 +1,10 @@
-import { Inter } from "next/font/google"
-
-const inter = Inter({
-    weight:"700",
-    subsets:["latin"]
-})
-
 export default function InputLabel(param: {
     label: string,
     placeholder: string,
     type: 'email' | 'password' | 'text' | 'confirm-password'
 }) {
     return (
-        <div className={`flex flex-col  justify-center gap-1 ${inter.className}`}>
+        <div className={`flex flex-col  justify-center gap-1 font-bold` }>
             <label htmlFor={param.type} className="ml-[8px]">
                 {param.label}
             </label>
