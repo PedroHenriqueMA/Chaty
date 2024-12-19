@@ -13,7 +13,7 @@ export default function login() {
 
             <SubmitButton title="Login" href="/home" />
 
-            <p> Don't have any account? <Link className="text-salmon" href="/sign-up" >Sign-up</Link></p>
+            <p> Don&apos;t have any account? <Link className="text-salmon" href="/sign-up" >Sign-up</Link></p>
         </form>
     )
 }

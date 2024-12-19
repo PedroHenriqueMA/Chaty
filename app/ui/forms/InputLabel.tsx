@@ -4,8 +4,8 @@ export default function InputLabel(param: {
     type: 'email' | 'password' | 'text' | 'confirm-password'
 }) {
     return (
-        <div className={`flex flex-col  justify-center gap-1 font-bold` }>
-            <label htmlFor={param.type} className="ml-[8px]">
+        <div className="flex flex-col  justify-center gap-1">
+            <label htmlFor={param.type} className="ml-[8px] font-bold">
                 {param.label}
             </label>
 

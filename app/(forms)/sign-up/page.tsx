@@ -14,7 +14,7 @@ export default function sign() {
 
             <SubmitButton title="Sign up" href="/home" props="bg-wine"/>
 
-            <p> Don't have any account? <Link className="text-salmon" href="/login" >Sign in</Link></p>
+            <p> Don&apos;t have any account? <Link className="text-salmon" href="/login" >Sign in</Link></p>
         </form>
     )
 }
