@@ -3,7 +3,8 @@
 import { Inter } from "next/font/google";
 
 const inter = Inter({
-    weight:"700"
+    weight:"700",
+    subsets:["latin"]
 })
 export default function SubmitButton(param:{
     title: string,
