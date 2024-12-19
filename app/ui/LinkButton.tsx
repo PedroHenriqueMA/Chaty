@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function LinkButton(param: {
     label: string,
     href: string,
-    props?: string
+    props: string | ''
 }) {
     return (
         <Link
