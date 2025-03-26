@@ -1,14 +1,13 @@
-import { getMessageById, getUserInfoById } from "@/app/lib/data"
-import { ChatType, MessageType, UserInfoType } from "@/app/lib/definitions"
+import { getMessageById } from "@/app/lib/data"
+import { ChatType } from "@/app/lib/definitions"
 import { User } from "@geist-ui/icons";
 
-export default async function chat({ chat }: { chat: ChatType }) {
-    const usernameRequest: UserInfoType = {
-        type: 'username'
-    }
-    /* pega um único usuário */
-    const username = await getUserInfoById(chat.members.filter(value => value !== 3 /* esse 3 deve ser o id do usuario atual */)[0], usernameRequest);
-    const lastMessage: MessageType | null = await getMessageById(chat.last_message);
+export default async function chat({chat}: {chat: ChatType}) {
+
+    console.log('oi')
+    
+    const username = 'lalala'
+    const lastMessage = await getMessageById(chat.last_message);
     if (username !== null) {
         return (
             <li className={`flex justify-between w-[84vw] mx-[8vw]`}>
@@ -20,7 +19,7 @@ export default async function chat({ chat }: { chat: ChatType }) {
                             {username}
                         </p>
                         <p className="font-light text-xs ml-2">
-                            {   
+                            {
                                 /* fazer um limite de tamanho */
                                 lastMessage == null ? '' : lastMessage.text
                             }

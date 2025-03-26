@@ -1,12 +1,8 @@
 "use server";
 import { z } from 'zod';
-import { neon } from '@neondatabase/serverless';
-import { getUserByEmail, getUserByName } from './data';
+import { createUser, getUserBy, getUserByLogin } from './data';
 import { State, UserType } from './definitions';
-import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers';
 
-const sql = neon(process.env.DATABASE_URL ?? "");
 const FormSchema = z.object({
     id: z.string(),
     username: z.string(),
@@ -24,10 +20,10 @@ const FormSchema = z.object({
 const CreateUser = FormSchema.omit({ id: true });
 const LoginUser = FormSchema.omit({ id: true, username: true });
 
-export async function createUser(
+export async function validateCreateUser(
     state: State,
     formData: FormData,
-): Promise<State> {
+): Promise<State | UserType> {
     const validatedFields = CreateUser.safeParse({
         username: formData.get("username"),
         email: formData.get("email"),
@@ -36,20 +32,20 @@ export async function createUser(
     if (!validatedFields.success) {
         return {
             errors: validatedFields.error.flatten().fieldErrors,
-            message: 'Fields do not match requires. Failed to Create User.',
+            message: 'Fields do not match requires. Failed to create user.',
         };
     }
     const { username, email, password } = validatedFields.data;
     const confirmPassword = formData.get("confirm-password");
     const [searchUsername, searchUserEmail] = await Promise.all([
-        getUserByName(username),
-        getUserByEmail(email),
+        getUserBy('username', username),
+        getUserBy('email', email),
     ]);
     const errors: State = {
         errors: {
-            password: [],
             username: [],
             email: [],
+            password: [],
             database: []
         },
         message: ''
@@ -57,10 +53,10 @@ export async function createUser(
     if (username == '') {
         errors.errors?.username?.push("Username is required")
     }
-    if (searchUsername !== undefined) {
+    if (searchUsername !== null) {
         errors.errors?.username?.push("Username already exists");
     }
-    if (searchUserEmail !== undefined) {
+    if (searchUserEmail !== null) {
         errors.errors?.email?.push("Email already exists");
     }
     if (confirmPassword !== password) {
@@ -76,30 +72,29 @@ export async function createUser(
     }
 
     try {
-        await sql(`
-            INSERT INTO users (username, email, password) 
-            VALUES ('${username}', '${email}', '${password})
-        `); /* está sem funcionar propositalmente */
-        const rawData = await sql(`
-            SELECT * FROM users 
-            WHERE email = '${email}'
-            AND password = '${password}'
-        `)
+        await createUser(
+            {
+                username: username,
+                email: email,
+                password: password
+            }
+        )
 
-        const data: UserType[] = rawData.map((item) => ({
-            id: item.id,
-            username: item.username,
-            email: item.email,
-            password: item.password
-        }))
+        const rawData = await getUserBy('email', email);
 
-        const cookiesStore = await cookies();
-        cookiesStore.set('chaty.auth', JSON.stringify(data[0]));
-        redirect('/home');
+        if (rawData === null) {
+            throw new Error('Faild to access your account')
+        }
+        const data: UserType = {
+            id: rawData.id,
+            username: rawData.username,
+            email: rawData.email
+        }
+
+        return data
 
     } catch (error) {
         console.log(error)
-        throw new Error('We had a problem with our database, Please wait a few minutes and try again.')
         return {
             ...state,
             errors: { database: ["Database error"] },
@@ -109,52 +104,41 @@ export async function createUser(
 }
 
 
-export async function loginUser(
+export async function validateLoginUser(
     state: State,
     formData: FormData
-): Promise<State> {
+): Promise<State | UserType> {
     const validatedFields = LoginUser.safeParse({
-        username: formData.get("username"),
         email: formData.get("email"),
         password: formData.get("password"),
     });
     if (!validatedFields.success) {
         return {
             errors: validatedFields.error.flatten().fieldErrors,
-            message: 'Missing Fields. Failed to Create Invoice.',
+            message: 'Missing Fields. Failed to login user',
         };
     }
     const { email, password } = validatedFields.data;
 
-    const rawData = await sql(`
-        SELECT * FROM users 
-        WHERE email = '${email}'
-        AND password = '${password}'
-    `)
+    try {
+        const data = await getUserByLogin(email, password)
 
-    const data: UserType[] = rawData.map((item) => ({
-        id: item.id,
-        username: item.username,
-        email: item.email,
-        password: item.password
-    }))
-
-    if (data[0] == undefined) {
-        return {
-            errors: {
-                email: ['Email or password is incorrect']
-            },
-            message: ''
+        if (data == null) {
+            return {
+                errors: {
+                    email: ['Email or password is incorrect']
+                },
+                message: ''
+            }
         }
-    }
+        return data
 
-    const userdata = {
-        id: data[0].id,
-        username: data[0].username,
-        email: data[0].email
+    } catch (error) {
+        console.log(error)
+        return {
+            ...state,
+            errors: { database: ["Database error"] },
+            message: "Failed to Create User.",
+        };
     }
-
-    const Cookies = await cookies();
-    Cookies.set('chaty.auth', JSON.stringify(userdata));
-    redirect('/home');
 }

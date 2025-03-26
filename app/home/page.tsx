@@ -1,10 +1,13 @@
 import { User, Search, AlignJustify } from '@geist-ui/icons';
-import ChatList from '../ui/home/ChatList';
 import { Suspense } from 'react';
 import { ChatListSkeleton } from '../ui/Skeletons';
+import { getChatsByUserId } from '../lib/data';
+import ChatItem from '../ui/home/Chat'
 
 export default async function Home() {
-
+    const userId = 3/* esse 3 deve ser o id do usuario atual que vai estar armazenado nos cookies*/;
+    const chats = await getChatsByUserId(userId);
+    console.log(chats)
     return (
         <>
             <header className='flex align-center justify-between px-5 py-5 border-b-2 border-yellow-50'>
@@ -15,10 +18,14 @@ export default async function Home() {
                 </div>
             </header>
             <main>
-                <Suspense fallback={<ChatListSkeleton/>}>
-                    <ChatList/>
+                <Suspense fallback={<ChatListSkeleton />}>
+                    <ol className='flex flex-col gap-5 mt-3'>
+                        {
+                            chats ? chats.map((chat) => (<ChatItem key={chat.id} chat={chat} />)) : ''
+                        }
+                    </ol>
                 </Suspense>
-                
+
             </main>
         </>
     )

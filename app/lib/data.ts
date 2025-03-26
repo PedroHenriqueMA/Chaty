@@ -1,86 +1,92 @@
 'use server';
 import { neon } from '@neondatabase/serverless';
-import { MessageType, UserInfoType, ChatType, UserType } from './definitions';
+import { MessageType, UserType, ChatType } from './definitions';
 const sql = neon(process.env.DATABASE_URL ?? "");
 
-const userSchema = {
-  id: (value: unknown) => typeof value === 'number',
-  username: (value: unknown) => typeof value === 'string',
-  email: (value: unknown) => typeof value === 'string',
-  password: (value: unknown) => typeof value === 'string',
-};
-
-const messageSchema = {
-  id: (value: unknown) => typeof value === 'number',
-  author: (value: unknown) => typeof value === 'number',
-  text: (value: unknown) => typeof value === 'string',
-  chat_id: (value: unknown) => typeof value === 'number',
-  time: (value: unknown) => typeof value === 'string',
-  date: (value: unknown) => value instanceof Date
-    ? !isNaN(new Date(value).getTime()) // Verifica se pode ser convertido para uma data válida
-    : false,
-};
-
-const chatShema = {
-  id: (value: unknown) => typeof value === 'number',
-  members: (value: unknown) => typeof value === 'object',
-  last_message: (value: unknown) => typeof value === 'number' || typeof value === 'object'
+export async function getUsers() {
+  return await sql`SELECT * FROM users`;
 }
 
-export async function getUsers(): Promise<UserType[]> {
-  const data = await sql`SELECT * FROM users`;
-  const filteredData: UserType[] = data.filter(user => {
-    return isOfType<UserType>(user, userSchema)
-  })
-  return filteredData
-}
-export async function getUserByEmail(email: string): Promise<UserType> {
-  const data = await sql`SELECT * FROM users WHERE email = ${email}`;
-  const filteredData: UserType[] = data.filter(user => {
-    return isOfType<UserType>(user, userSchema)
-  })
-  return filteredData[0];
-}
-
-export async function getUserByName(username: string) {
-  const data = await sql`SELECT * FROM users WHERE username = ${username}`;
-  const filteredData: UserType[] = data.filter(user => {
-    return isOfType<UserType>(user, userSchema)
-  })
-  return filteredData[0];
-}
-
-export async function getUserInfoById(id: number, info: UserInfoType): Promise<string | null> {
-  const data = await sql`SELECT * FROM users WHERE id = ${id}`;
-  if (data.length > 0 && info) {
-    return data[0][info.type];
+export async function getUserBy(key: string, value: string): Promise<UserType | null> {
+  const validKeys = ["id", "username", "email"];
+  if (!validKeys.includes(key)) {
+    throw new Error("Chave inválida");
   }
-  return null;
+
+  const query = `SELECT * FROM users WHERE ${key} = $1`;
+  const data = await sql(query, [value]);
+
+  if (!data[0] || data.length === 0) return null;
+
+  return {
+    id: data[0].id,
+    username: data[0].username,
+    email: data[0].email
+  };
 }
 
-export async function getChatsById(userId: number): Promise<ChatType[] | null> {
-  const data = await sql`SELECT * FROM chats WHERE ${userId} = ANY(members)`;
-  if (data.length > 0) {
-    const filteredData = data.filter(chat => {
-      return isOfType<ChatType>(chat, chatShema);
-    })
-    return filteredData
+export async function createUser(user: Omit<UserType, 'id'> & { password: string }) {
+  await sql(`
+    INSERT INTO users (username, email, password) 
+    VALUES ('${user.username}', '${user.email}', '${user.password}')
+  `);
+}
+
+export async function getUserByLogin(email: string, password: string): Promise<UserType | null> {
+  const data = await sql`SELECT * FROM users WHERE email = ${email} AND password = ${password} `
+
+  if (!data || data.length === 0) return null;
+
+  return {
+    id: data[0].id,
+    username: data[0].username,
+    email: data[0].email
+  };
+}
+
+export async function getChatsByUserId(userId: number): Promise<ChatType[] | null> {
+  const chatMembers = await sql`SELECT * FROM chat_members WHERE user_id = ${userId}`;
+
+  if (!chatMembers || chatMembers.length === 0) {
+    return null;
   }
-  return null
+
+  const idChats = chatMembers.map((chatMember) => chatMember.chat_id);
+  const chats = await sql`SELECT * FROM chats WHERE id IN (${idChats.join(', ')})`;
+
+  const validChats: ChatType[] = chats.filter((chat): chat is ChatType =>
+    typeof chat.id === 'number' &&
+    (chat.last_message === null || typeof chat.last_message === 'number')
+  );
+
+  return validChats.length > 0 ? validChats : null;
+}
+export async function getMembersByChatId(chatId: number) {
+  const data = await sql`SELECT * FROM chat_members WHERE chat_id = ${chatId}`;
+  return data /* Retorna sem tipo nenhum */
 }
 
 export async function getMessageById(messageId: number | null): Promise<MessageType | null> {
-  const data = await sql`SELECT * FROM messages WHERE id = ${messageId}`
-  if (data.length > 0 && isOfType<MessageType>(data[0], messageSchema)) {
-    return data[0];
-  }
-  return null;
+  if (messageId === null) return null;
+
+  const data = await sql`
+    SELECT * FROM messages WHERE id = ${messageId}
+  `;
+
+  if (!data || data.length === 0) return null;
+
+  const message = data[0];
+
+  return {
+    id: message.id,
+    user_id: message.user_id,
+    text: message.text,
+    chat_id: message.chat_id,
+    time: message.time,
+    date: new Date(message.date),
+  };
 }
 
-function isOfType<T>(obj: unknown, schema: { [K in keyof T]: (value: unknown) => boolean }): obj is T {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    Object.keys(schema).every((key) => schema[key as keyof T]((obj as Record<string, unknown>)[key]))
-  );
+export async function getMessagesByUserId(userId: number) {
+  return await sql`SELECT * FROM messages WHERE user_id = ${userId}`
 }

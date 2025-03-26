@@ -1,15 +1,26 @@
 'use client'
-import { loginUser } from "@/app/lib/actions";
+import { validateLoginUser } from "@/app/lib/actions";
 import InputLabel from "@/app/ui/forms/InputLabel";
 import SubmitButton from "@/app/ui/forms/SubmitButton";
 import Link from "next/link";
 import Image from "next/image";
-import { useActionState } from "react";
+import { useState } from "react";
 import { State } from "@/app/lib/definitions";
 
 export default function Login() {
     const initialState: State = { errors: {}, message: null };
-    const [state, formAction] = useActionState(loginUser, initialState);
+    const [state, setState] = useState(initialState);
+        async function formAction(e: FormData) {
+            const res = await validateLoginUser(state, e);
+            if ( 'id' in res && 'username' in res && 'email' in res ){
+                console.log('user', res)
+                /* cookies */
+                /* router */
+            } else {
+                console.log('state', res)
+                setState(res)
+            }
+        }
     return (
         <>
             <Image priority={true} width={150} height={50} src={'/logo/logo-white.png'} alt="chaty logo" />
