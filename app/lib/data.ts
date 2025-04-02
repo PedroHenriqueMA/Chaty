@@ -7,44 +7,26 @@ export async function getUsers() {
   return await sql`SELECT * FROM users`;
 }
 
-export async function getUserBy(key: string, value: string): Promise<UserType | null> {
+export async function getUserBy(key: string, value: string): Promise<UserType> {
   const validKeys = ["id", "username", "email"];
   if (!validKeys.includes(key)) {
-    throw new Error("Chave inválida");
+    throw new Error("Invalid key");
   }
 
   const query = `SELECT * FROM users WHERE ${key} = $1`;
   const data = await sql(query, [value]);
 
-  if (!data[0] || data.length === 0) return null;
+  if (!data[0] || data.length === 0) throw new Error('Faild to find user');
 
   return {
     id: data[0].id,
     username: data[0].username,
-    email: data[0].email
+    email: data[0].email,
+    image_url: data[0].image_url
   };
 }
 
-export async function createUser(user: Omit<UserType, 'id'> & { password: string }) {
-  await sql(`
-    INSERT INTO users (username, email, password) 
-    VALUES ('${user.username}', '${user.email}', '${user.password}')
-  `);
-}
-
-export async function getUserByLogin(email: string, password: string): Promise<UserType | null> {
-  const data = await sql`SELECT * FROM users WHERE email = ${email} AND password = ${password} `
-
-  if (!data || data.length === 0) return null;
-
-  return {
-    id: data[0].id,
-    username: data[0].username,
-    email: data[0].email
-  };
-}
-
-export async function getChatsByUserId(userId: number): Promise<ChatType[] | null> {
+export async function getChatsByUserId(userId: string): Promise<ChatType[] | null> {
   const chatMembers = await sql`SELECT * FROM chat_members WHERE user_id = ${userId}`;
 
   if (!chatMembers || chatMembers.length === 0) {
@@ -89,4 +71,23 @@ export async function getMessageById(messageId: number | null): Promise<MessageT
 
 export async function getMessagesByUserId(userId: number) {
   return await sql`SELECT * FROM messages WHERE user_id = ${userId}`
+}
+
+export async function getMessagesByChatId(chatId: number): Promise<MessageType[] | null>{
+  const data = await sql`SELECT * FROM messages WHERE chat_id = ${chatId}`;
+
+  if(!data || data.length === 0){
+    return null
+  }
+
+  return data.map((item): MessageType => {
+    return {
+      id:item.id,
+      chat_id:item.chat_id,
+      user_id: item.user_id,
+      text: item.text,
+      time: item.time,
+      date: item.date
+    }
+  })
 }
