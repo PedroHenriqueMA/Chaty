@@ -14,7 +14,7 @@ export default async function ChatItem({ chat }: { chat: ChatType }) {
     if (name !== null) {
         return (
             <li className={`flex cursor-pointer`}>
-                <Link href={`/home/chat?id=${chat.id}&name=${chat.name}&image=${chat.image_url}`} className="flex justify-between w-[84vw] mx-[8vw]" >
+                <Link href={`/home/chat/${chat.id}?name=${chat.name}&image=${chat.image_url}`} className="flex justify-between w-[84vw] mx-[8vw]" >
                     <div className="flex w gap-5">
                         {
                             image

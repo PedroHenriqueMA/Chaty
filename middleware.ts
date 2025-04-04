@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from "next/server";
 import { decrypt } from './app/lib/session';
+import { getChatsAllowedForUser } from './app/lib/data';
 
 const protectedRoutes = ["/home", "/home/chat"];
 const publicRoutes = ["/", "/login", "/sign-up"];
@@ -14,11 +15,20 @@ export default async function middleware(req: NextRequest) {
     const cookie = (await cookies()).get('session')?.value;
     const session = await decrypt(cookie);
 
-    if( isProtected && !session?.user){
+    if (isProtected && !session?.user) {
         return NextResponse.redirect(new URL('/login', req.nextUrl));
     }
 
-    if(isPublic && session?.user){
+    if (path.includes('/home/chat') && session?.user) {
+        const chatId = req.url.match(/(?<=\/)[^\/?]+(?=\?)/);
+        const chatsAllowed = await getChatsAllowedForUser(session.user.id);
+
+        if (!chatsAllowed.includes(Number(chatId))) {
+            return NextResponse.redirect(new URL('/home', req.nextUrl))
+        }
+    }
+
+    if (isPublic && session?.user) {
         return NextResponse.redirect(new URL('/home', req.nextUrl));
     }
 

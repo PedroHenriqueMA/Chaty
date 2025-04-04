@@ -25,7 +25,12 @@ export async function getUserBy(key: string, value: string): Promise<UserType> {
     image_url: data[0].image_url
   };
 }
-
+export async function getChatsAllowedForUser(userId: string): Promise<ChatType['id'][]> {
+  const data = await sql`SELECT * FROM chat_members WHERE user_id = ${userId}`
+  return data.map((chat_member) => {
+    return chat_member.chat_id
+  })
+}
 export async function getChatsByUserId(userId: string): Promise<ChatType[] | null> {
   const chatMembers = await sql`SELECT * FROM chat_members WHERE user_id = ${userId}`;
 
@@ -73,17 +78,17 @@ export async function getMessagesByUserId(userId: number) {
   return await sql`SELECT * FROM messages WHERE user_id = ${userId}`
 }
 
-export async function getMessagesByChatId(chatId: number): Promise<MessageType[] | null>{
+export async function getMessagesByChatId(chatId: number): Promise<MessageType[] | null> {
   const data = await sql`SELECT * FROM messages WHERE chat_id = ${chatId}`;
 
-  if(!data || data.length === 0){
+  if (!data || data.length === 0) {
     return null
   }
 
   return data.map((item): MessageType => {
     return {
-      id:item.id,
-      chat_id:item.chat_id,
+      id: item.id,
+      chat_id: item.chat_id,
       user_id: item.user_id,
       text: item.text,
       time: item.time,

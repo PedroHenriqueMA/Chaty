@@ -9,17 +9,17 @@ import Message from "@/app/ui/home/chat/Message";
 import { Suspense } from "react";
 
 type chatProps = {
-    id: number,
-    name: string, 
+    name: string,
     image: string
 }
 
-export default async function Chat({ searchParams }: {
+export default async function Chat({ params, searchParams }: {
+    params: Promise<{id:number}>
     searchParams: Promise<chatProps>
 }) {
-    const { id, name, image } = await searchParams;
+    const { id } = await params
+    const { name, image } = await searchParams;
     const cookie = await decrypt((await cookies()).get('session')?.value)
-    
 
     if (cookie === undefined || !id) {
         redirect('/login');
@@ -41,25 +41,24 @@ export default async function Chat({ searchParams }: {
                 </div>
                 <AlignJustify className='w-[30px] h-[30px]' />
             </header>
+            <main>
+                <Suspense fallback={<> Loading ... </>}> {/* skeleton das mensagens */}
+                    <ol className="flex flex-col gap-5 w-[100vw] mt-[20px]">
+                        {
+                            messages
+                                ? messages.map((message) => (
+                                    cookie.user.id === message.user_id
+                                        ?
+                                        <Message key={message.id} message={message} type="owner" />
+                                        :
+                                        <Message key={message.id} message={message} type="other" />
+                                ))
+                                : 'No messages found'
 
-            <Suspense fallback={<> Loading ... </>}> {/* skeleton das mensagens */}
-                <ol className="flex flex-col gap-5 w-[100vw] mt-[20px]">
-                    {
-                        messages
-                            ? messages.map((message) => (
-                                cookie.user.id === message.user_id
-                                    ?
-                                    <Message key={message.id} message={message} type="owner" />
-                                    :
-                                    <Message key={message.id} message={message} type="other" />
-                            ))
-                            : 'No messages found'
-
-                    }
-                </ol>
-            </Suspense>
-
-
+                        }
+                    </ol>
+                </Suspense>
+            </main>
 
         </>
     )
