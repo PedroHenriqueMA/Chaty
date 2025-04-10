@@ -1,16 +1,18 @@
 "use server";
 import { neon } from '@neondatabase/serverless';
-import { getUserBy } from './data';
-import { CreateUser, LoginUser, State, UserType } from './definitions';
-import { createSession, deleteSession } from './session';
+import { chatExist, getUserBy } from './data';
+import { ChatFormState, chatSchema, CreateUser, LoginUser, UserFormState, UserType } from './definitions';
+import { createSession, decrypt, deleteSession } from './session';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 
 const sql = neon(process.env.DATABASE_URL ?? "");
 
 export async function createUser(
-    state: State,
+    state: UserFormState,
     formData: FormData,
-): Promise<State> {
+): Promise<UserFormState> {
     const validatedFields = CreateUser.safeParse({
         username: formData.get("username"),
         email: formData.get("email"),
@@ -25,7 +27,7 @@ export async function createUser(
 
     const { username, email, password } = validatedFields.data;
     const confirmPassword = formData.get("confirm-password");
-    const errors: State = {
+    const errors: UserFormState = {
         errors: {
             username: [],
             email: [],
@@ -96,9 +98,9 @@ export async function createUser(
 
 
 export async function loginUser(
-    state: State,
+    state: UserFormState,
     formData: FormData
-): Promise<State> {
+): Promise<UserFormState> {
     const validatedFields = LoginUser.safeParse({
         email: formData.get("email"),
         password: formData.get("password"),
@@ -131,7 +133,7 @@ export async function loginUser(
             image_url: data[0].image_url
         });
 
-        return{
+        return {
             errors: {},
             message: 'success'
         }
@@ -145,7 +147,79 @@ export async function loginUser(
     };
 };
 
-export async function logout(){
+export async function logout() {
     await deleteSession();
     redirect('/login');
-}
+};
+
+export async function createChat(
+    state: ChatFormState,
+    formData: FormData
+): Promise<ChatFormState> {
+    const validatedFields = chatSchema.safeParse({
+        name: formData.get("name"),
+        image_url: formData.get("url"),
+        members: formData.get("members")?.toString().split(',').filter(val => val !== '')
+    });
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Missing Fields. Failed to login user',
+        };
+    };
+
+    const { name, image_url, members } = validatedFields.data;
+    const isNameUsed = await chatExist(name);
+
+    if (isNameUsed) {
+        return {
+            errors: {
+                name: ['This name is already being used'],
+            },
+            message: 'faild to create chat'
+        };
+    };
+
+
+    console.log(name, image_url, members);
+
+    try {
+        const userLogged = await decrypt((await cookies()).get('session')?.value).then((res) => res?.user);
+
+        if (!userLogged) {
+            revalidatePath('/home');
+            return {
+                errors: {},
+                message: 'There is no user logged'
+            }
+        };
+
+        await sql`INSERT INTO chats (name, image_url) 
+            VALUES (${name}, ${image_url})`;
+
+        const chatId = (await sql`SELECT * FROM chats WHERE name = ${name}`)[0].id;
+
+        if (!members.includes(userLogged?.username)) {
+            await sql`INSERT INTO chat_members (user_id, chat_id) VALUES (${userLogged?.id}, ${chatId})`;
+        };
+
+        /* os membros podem ser repetidos */
+        members.forEach(async (memberName) => {
+            const { id } = await getUserBy('username', memberName);
+            await sql`INSERT INTO chat_members (user_id, chat_id) VALUES (${id}, ${chatId})`;
+        });
+
+        revalidatePath('/home');
+        return {
+            errors: {},
+            message: 'success'
+        };
+    } catch (error) {
+        console.log(error);
+        return {
+            errors: { database: ['faild to create chat'] },
+            message: `${error}`
+        };
+    };
+};

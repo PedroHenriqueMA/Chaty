@@ -19,7 +19,7 @@ export default async function Message({ message, type }: { message: MessageType,
 
 
     return (
-        <li className={`flex justify-center items-center gap-2 text-white mx-[10px] relative ${obj.li[type]}`} >
+        <li className={`flex justify-center items-center gap-2 text-white mx-[5px] relative ${obj.li[type]}`} >
             {
                 type == 'owner'
                     ? ''

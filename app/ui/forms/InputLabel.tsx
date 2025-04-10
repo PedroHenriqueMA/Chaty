@@ -1,15 +1,16 @@
 'use client'
 
-import { State } from "@/app/lib/definitions"
+import { UserFormState } from "@/app/lib/definitions"
 
-export default function InputLabel({ label, placeholder, type, name, errorName, state }:
+export default function InputLabel({ label, placeholder, type, name, errorName, state, props }:
     {
         label: string,
         placeholder: string,
         type: 'email' | 'password' | 'text' | 'confirm-password',
         name: string,
         errorName: 'username' | 'password' | 'email',
-        state: State
+        state: UserFormState,
+        props?: string
     }
 ) {
 
@@ -21,7 +22,7 @@ export default function InputLabel({ label, placeholder, type, name, errorName, 
             </label>
 
             <input
-                className={`rounded-3xl py-[6px] px-3 w-[200px] text-black text-sm focus:outline-none focus:ring-0 
+                className={`rounded-3xl py-[6px] px-3 w-[200px] text-black text-sm focus:outline-none focus:ring-0 ${props}
                     ${errors.length > 0 ?
                         "border-red-500 border-2"
                         : ""

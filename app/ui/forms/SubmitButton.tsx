@@ -7,7 +7,7 @@ export default function SubmitButton(param:{
 }){
     return (
         <input 
-        className={`rounded-3xl py-2 px-8 bg-salmon-dark font-bold cursor-pointer ${param.props}`}
+        className={`rounded-3xl py-2 px-8 bg-salmon-dark font-bold cursor-pointer text-white ${param.props}`}
         id="submit" 
         type="submit"
         value={param.title}

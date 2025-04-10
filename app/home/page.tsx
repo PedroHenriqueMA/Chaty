@@ -2,12 +2,13 @@ import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { User, Search, AlignJustify, Plus } from '@geist-ui/icons';
+import { User, Search, AlignJustify } from '@geist-ui/icons';
 import { ChatListSkeleton } from '../ui/Skeletons';
 import ChatItem from '../ui/home/Chat';
 import { logout } from '../lib/actions';
 import { decrypt } from '../lib/session';
 import { getChatsByUserId } from '../lib/data';
+import CreateChat from '../ui/home/CreateChat';
 
 export default async function Home() {
     const cookie  = await decrypt((await cookies()).get('session')?.value);
@@ -45,11 +46,8 @@ export default async function Home() {
                         }
                     </ol>
                 </Suspense>
-
-                <button /* onClick={} */ className='fixed bottom-[10px] right-[10px] w-[60px] h-[60px] p-[10px] rounded-[20px] bg-wine '>
-                    <Plus className='w-[40px] h-[40px]'/>
-                </button>
-            </main>
+                <CreateChat/>
+            </main>   
         </>
     )
 }

@@ -38,8 +38,8 @@ export async function getChatsByUserId(userId: string): Promise<ChatType[] | nul
     return null;
   }
 
-  const idChats = chatMembers.map((chatMember) => chatMember.chat_id);
-  const chats = await sql`SELECT * FROM chats WHERE id IN (${idChats.join(', ')})`;
+  const idChats = (chatMembers.map((chatMember) => chatMember.chat_id)).filter(Number.isInteger);
+  const chats = await sql(`SELECT * FROM chats WHERE id IN (${idChats.join(',')})`);
 
   const validChats: ChatType[] = chats.filter((chat): chat is ChatType =>
     typeof chat.id === 'number' &&
@@ -95,4 +95,20 @@ export async function getMessagesByChatId(chatId: number): Promise<MessageType[]
       date: item.date
     }
   })
+}
+
+export async function userExist(userName: string): Promise<boolean> {
+  const data = await sql`SELECT * FROM users WHERE username = ${userName}`;
+  if (data.length == 0) {
+    return false;
+  }
+  return true;
+}
+
+export async function chatExist(chatName: string): Promise<boolean> {
+  const data = await sql`SELECT * FROM chats WHERE name = ${chatName}`;
+  if (data.length == 0) {
+    return false;
+  }
+  return true;
 }

@@ -16,6 +16,13 @@ const FormSchema = z.object({
             message: 'Requires less than 12 characters'
         })
 });
+export const chatSchema = z.object({
+    name: z.string().nonempty({
+        message: 'Chat name is required'
+    }),
+    image_url: z.string(),
+    members: z.string().array()
+})
 export const CreateUser = FormSchema.omit({ id: true });
 export const LoginUser = FormSchema.omit({ id: true, username: true });
 
@@ -25,11 +32,11 @@ export type ChatMembersType = {
 }
 export type UserType = {
     id: string;
-    username: string; 
+    username: string;
     email: string;
     image_url: string | null;
 }
-export type ChatType =  {
+export type ChatType = {
     id: number;
     name: string;
     image_url: string | null;
@@ -43,7 +50,7 @@ export type MessageType = {
     time: string; /* Mudar para um tipo mais correto */
     date: Date
 }
-export type State = {
+export type UserFormState = {
     errors?: {
         username?: string[],
         email?: string[],
@@ -51,4 +58,13 @@ export type State = {
         database?: string[],
     };
     message?: string | null;
+}
+export type ChatFormState = {
+    errors?: {
+        name?: string[],
+        image_url?: string[],
+        members?: string[],
+        database?: string[]
+    };
+    message?: string | null
 }
