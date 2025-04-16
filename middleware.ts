@@ -20,10 +20,10 @@ export default async function middleware(req: NextRequest) {
     }
 
     if (path.includes('/home/chat') && session?.user) {
-        const chatId = req.url.match(/(?<=\/)[^\/?]+(?=\?)/);
+        const chatId = req.url.match(/chat\/(\w+)/);
         const chatsAllowed = await getChatsAllowedForUser(session.user.id);
 
-        if (!chatsAllowed.includes(Number(chatId))) {
+        if (chatId && !chatsAllowed.includes(Number(chatId[1]))) {
             return NextResponse.redirect(new URL('/home', req.nextUrl))
         }
     }

@@ -48,6 +48,21 @@ export async function getChatsByUserId(userId: string): Promise<ChatType[] | nul
 
   return validChats.length > 0 ? validChats : null;
 }
+
+export async function getChatById(chatId: number): Promise<ChatType | null>{
+  const data = await sql`SELECT * FROM chats WHERE id = ${chatId}`
+
+  if(data.length === 0) {
+    return null
+  }
+  return {
+    id: data[0].id,
+    name: data[0].name,
+    last_message: data[0].last_message,
+    image_url: data[0].image_url
+  }
+}
+
 export async function getMembersByChatId(chatId: number) {
   const data = await sql`SELECT * FROM chat_members WHERE chat_id = ${chatId}`;
   return data /* Retorna sem tipo nenhum */

@@ -15,7 +15,7 @@ export default async function Message({ message, type }: { message: MessageType,
         }
     }
 
-    const { image_url, username } = await getUserBy('id', message.user_id);
+    const { image_url, username } = await getUserBy('id', message.user_id) || {};
 
 
     return (

@@ -2,23 +2,17 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AlignJustify, User, ArrowLeft } from "@geist-ui/icons";
-import { getMessagesByChatId } from "@/app/lib/data";
+import { getChatById, getMessagesByChatId } from "@/app/lib/data";
 import { MessageType } from "@/app/lib/definitions";
 import { decrypt } from "@/app/lib/session";
 import Message from "@/app/ui/home/chat/Message";
 import { Suspense } from "react";
 
-type chatProps = {
-    name: string,
-    image: string
-}
-
-export default async function Chat({ params, searchParams }: {
-    params: Promise<{id:number}>
-    searchParams: Promise<chatProps>
+export default async function Chat({ params }: {
+    params: Promise<{ id: number }>
 }) {
     const { id } = await params
-    const { name, image } = await searchParams;
+    const { name, image_url } = await getChatById(id) || {};
     const cookie = await decrypt((await cookies()).get('session')?.value)
 
     if (cookie === undefined || !id) {
@@ -32,8 +26,8 @@ export default async function Chat({ params, searchParams }: {
                 <div className="flex gap-2 items-center">
                     <ArrowLeft /> {/* retornar para página anterior */}
                     {
-                        image
-                            ? (<Image src={image} alt='User avatar' width={35} height={35} className='w-[35px] h-[35px] rounded-full' />)
+                        image_url
+                            ? (<Image src={image_url} alt='User avatar' width={35} height={35} className='w-[35px] h-[35px] rounded-full' />)
                             : (<User className='w-[35px] h-[35px] border-2 rounded-full' />)
 
                     }
