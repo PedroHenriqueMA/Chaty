@@ -1,5 +1,6 @@
 "use server";
 import { neon } from '@neondatabase/serverless';
+import bcrypt from 'bcryptjs';
 import { chatExist, getUserBy } from './data';
 import { ChatFormState, chatSchema, CreateUser, LoginUser, UserFormState, UserType } from './definitions';
 import { createSession, decrypt, deleteSession } from './session';
@@ -60,10 +61,9 @@ export async function createUser(
             return errors
         }
 
-        await sql(`
-            INSERT INTO users (username, email, password) 
-            VALUES ('${username}', '${email}', '${password}')
-        `);
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await sql(`INSERT INTO users (username, email, password) VALUES ('${username}', '${email}', '${hashedPassword}')`);
 
         const data: UserType | null = await getUserBy('email', email);
 
@@ -88,9 +88,10 @@ export async function createUser(
         }
 
     } catch (error) {
+        console.log(error)
         return {
             ...state,
-            errors: { database: [`Database error: ${error}`] },
+            errors: { database: [`Database error`] },
             message: "Failed to Create User.",
         };
     };
@@ -115,22 +116,22 @@ export async function loginUser(
     const { email, password } = validatedFields.data;
 
     try {
-        const data = await sql`SELECT * FROM users WHERE email = ${email} AND password = ${password} `;
+        const user = (await sql`SELECT * FROM users WHERE email = ${email} `)[0];
 
-        if (!data || data.length === 0) {
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             return {
                 errors: {
                     email: ['Email or password is incorrect']
                 },
                 message: 'Login is incorrect'
-            }
-        };
+            };
+        }
 
         await createSession({
-            id: data[0].id,
-            username: data[0].username,
-            email: data[0].email,
-            image_url: data[0].image_url
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            image_url: user.image_url
         });
 
         return {
@@ -139,9 +140,10 @@ export async function loginUser(
         }
 
     } catch (error) {
+        console.log(error);
         return {
             ...state,
-            errors: { database: [`Database error: ${error}`] },
+            errors: { database: [`Database error`] },
             message: "Failed to Login User.",
         };
     };
@@ -195,20 +197,24 @@ export async function createChat(
             }
         };
 
-        await sql`INSERT INTO chats (name, image_url) 
-            VALUES (${name}, ${image_url})`;
+        await sql`INSERT INTO chats (name, image_url) VALUES (${name}, ${image_url})`;
 
         const chatId = (await sql`SELECT * FROM chats WHERE name = ${name}`)[0].id;
+
+        if (!chatId) throw new Error("Chat creation failed. No ID returned.");
 
         if (!members.includes(userLogged?.username)) {
             await sql`INSERT INTO chat_members (user_id, chat_id) VALUES (${userLogged?.id}, ${chatId})`;
         };
 
-        /* os membros podem ser repetidos */
-        members.forEach(async (memberName) => {
-            const { id } = await getUserBy('username', memberName);
-            await sql`INSERT INTO chat_members (user_id, chat_id) VALUES (${id}, ${chatId})`;
-        });
+        const filteredMembers = [... new Set(members)];
+
+        for (const memberName of filteredMembers) {
+            const user = await getUserBy('username', memberName);
+            if (user) {
+                await sql`INSERT INTO chat_members (user_id, chat_id) VALUES (${user.id}, ${chatId})`;
+            }
+        }
 
         revalidatePath('/home');
         return {
@@ -218,8 +224,8 @@ export async function createChat(
     } catch (error) {
         console.log(error);
         return {
-            errors: { database: ['faild to create chat'] },
-            message: `${error}`
+            errors: { database: ['Faild to create chat'] },
+            message: `Faild to create chat`
         };
     };
 };

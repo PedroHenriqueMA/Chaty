@@ -7,7 +7,7 @@ export async function getUsers() {
   return await sql`SELECT * FROM users`;
 }
 
-export async function getUserBy(key: string, value: string): Promise<UserType> {
+export async function getUserBy(key: string, value: string): Promise<UserType | null> {
   const validKeys = ["id", "username", "email"];
   if (!validKeys.includes(key)) {
     throw new Error("Invalid key");
@@ -16,7 +16,7 @@ export async function getUserBy(key: string, value: string): Promise<UserType> {
   const query = `SELECT * FROM users WHERE ${key} = $1`;
   const data = await sql(query, [value]);
 
-  if (!data[0] || data.length === 0) throw new Error('Faild to find user');
+  if (!data[0] || data.length === 0) return null;
 
   return {
     id: data[0].id,
