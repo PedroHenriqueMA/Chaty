@@ -18,8 +18,8 @@ export default async function ChatItem({ chat }: { chat: ChatType }) {
                     <div className="flex w gap-5">
                         {
                             image
-                                ? (<Image src={image} alt="Imagem do grupo" width={35} height={35} className='w-[35px] h-[35px] border-2 rounded-full' />)
-                                : (<User className='w-[35px] h-[35px] border-2 rounded-full' />)}
+                                ? (<Image src={image} alt="Imagem do grupo" width={35} height={35} className='w-[35px] h-[35px] rounded-full' />)
+                                : (<User color="var(--foreground)" className='w-[35px] h-[35px] border-2 border-foreground rounded-full' />)}
 
 
                         <div className="flex flex-col">

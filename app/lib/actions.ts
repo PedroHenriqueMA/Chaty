@@ -2,7 +2,7 @@
 import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 import { chatExist, getUserBy } from './data';
-import { ChatFormState, chatSchema, CreateUser, LoginUser, UserFormState, UserType } from './definitions';
+import { ChatFormState, chatSchema, CreateUser, LoginUser, MessageType, UserFormState, UserType } from './definitions';
 import { createSession, decrypt, deleteSession } from './session';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -159,20 +159,20 @@ export async function createChat(
     formData: FormData
 ): Promise<ChatFormState> {
     const validatedFields = chatSchema.safeParse({
-        name: formData.get("name"),
-        image_url: formData.get("url"),
+        chat_name: formData.get("chat_name"),
+        image_url: formData.get("image_url"),
         members: formData.get("members")?.toString().split(',').filter(val => val !== '')
     });
 
     if (!validatedFields.success) {
         return {
             errors: validatedFields.error.flatten().fieldErrors,
-            message: 'Missing Fields. Failed to login user',
+            message: 'Missing Fields. Failed to create chat',
         };
     };
 
-    const { name, image_url, members } = validatedFields.data;
-    const isNameUsed = await chatExist(name);
+    const { chat_name, image_url, members } = validatedFields.data;
+    const isNameUsed = await chatExist(chat_name);
 
     if (isNameUsed) {
         return {
@@ -184,7 +184,7 @@ export async function createChat(
     };
 
 
-    console.log(name, image_url, members);
+    console.log(chat_name, image_url, members);
 
     try {
         const userLogged = await decrypt((await cookies()).get('session')?.value).then((res) => res?.user);
@@ -197,9 +197,9 @@ export async function createChat(
             }
         };
 
-        await sql`INSERT INTO chats (name, image_url) VALUES (${name}, ${image_url})`;
+        await sql`INSERT INTO chats (name, image_url) VALUES (${chat_name}, ${image_url})`;
 
-        const chatId = (await sql`SELECT * FROM chats WHERE name = ${name}`)[0].id;
+        const chatId = (await sql`SELECT * FROM chats WHERE name = ${chat_name}`)[0].id;
 
         if (!chatId) throw new Error("Chat creation failed. No ID returned.");
 
@@ -229,3 +229,15 @@ export async function createChat(
         };
     };
 };
+
+export async function createMessage({id, text, user_id, chat_id, time, date}: MessageType) {
+    try {
+        await sql`INSERT INTO messages 
+        (id, text, user_id, chat_id, time, date) 
+        VALUES (${id}, ${text}, ${user_id}, ${chat_id}, ${time}, ${date})`;
+
+        await sql`UPDATE chats SET last_message = ${id} WHERE id = ${chat_id}`;
+    } catch (error) {
+        console.log(error);
+    }
+}

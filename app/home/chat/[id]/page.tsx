@@ -2,18 +2,20 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AlignJustify, User, ArrowLeft } from "@geist-ui/icons";
-import { getChatById, getMessagesByChatId } from "@/app/lib/data";
+import { getChatById, getMembersByChatId, getMessagesByChatId } from "@/app/lib/data";
 import { MessageType } from "@/app/lib/definitions";
 import { decrypt } from "@/app/lib/session";
-import Message from "@/app/ui/home/chat/Message";
 import { Suspense } from "react";
+import MessagesList from "@/app/ui/home/chat/MessagesList";
+import { MessageListSkeleton } from "@/app/ui/Skeletons";
 
 export default async function Chat({ params }: {
     params: Promise<{ id: number }>
 }) {
-    const { id } = await params
+    const { id } = await params;
     const { name, image_url } = await getChatById(id) || {};
-    const cookie = await decrypt((await cookies()).get('session')?.value)
+    const users = await getMembersByChatId(id);
+    const cookie = await decrypt((await cookies()).get('session')?.value);
 
     if (cookie === undefined || !id) {
         redirect('/login');
@@ -22,7 +24,7 @@ export default async function Chat({ params }: {
 
     return (
         <>
-            <header className="flex justify-between  px-5 py-5 border-b-2 border-yellow-50">
+            <header className="flex justify-between px-5 py-5 border-b-2 border-yellow-50">
                 <div className="flex gap-2 items-center">
                     <ArrowLeft /> {/* retornar para página anterior */}
                     {
@@ -36,21 +38,8 @@ export default async function Chat({ params }: {
                 <AlignJustify className='w-[30px] h-[30px]' />
             </header>
             <main>
-                <Suspense fallback={<> Loading ... </>}> {/* skeleton das mensagens */}
-                    <ol className="flex flex-col gap-5 w-[100vw] mt-[20px]">
-                        {
-                            messages
-                                ? messages.map((message) => (
-                                    cookie.user.id === message.user_id
-                                        ?
-                                        <Message key={message.id} message={message} type="owner" />
-                                        :
-                                        <Message key={message.id} message={message} type="other" />
-                                ))
-                                : 'No messages found'
-
-                        }
-                    </ol>
+                <Suspense fallback={<MessageListSkeleton/>}> {/* skeleton das mensagens */}
+                    {<MessagesList messages={messages} currentUser={cookie.user.id} chat_id={id} users={users}/>}
                 </Suspense>
             </main>
 

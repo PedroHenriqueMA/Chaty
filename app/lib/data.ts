@@ -40,19 +40,17 @@ export async function getChatsByUserId(userId: string): Promise<ChatType[] | nul
 
   const idChats = (chatMembers.map((chatMember) => chatMember.chat_id)).filter(Number.isInteger);
   const chats = await sql(`SELECT * FROM chats WHERE id IN (${idChats.join(',')})`);
-
   const validChats: ChatType[] = chats.filter((chat): chat is ChatType =>
-    typeof chat.id === 'number' &&
-    (chat.last_message === null || typeof chat.last_message === 'number')
+    typeof chat.id === 'number' && (chat.last_message === null || typeof chat.last_message === 'string')
   );
 
   return validChats.length > 0 ? validChats : null;
 }
 
-export async function getChatById(chatId: number): Promise<ChatType | null>{
+export async function getChatById(chatId: number): Promise<ChatType | null> {
   const data = await sql`SELECT * FROM chats WHERE id = ${chatId}`
 
-  if(data.length === 0) {
+  if (data.length === 0) {
     return null
   }
   return {
@@ -64,11 +62,26 @@ export async function getChatById(chatId: number): Promise<ChatType | null>{
 }
 
 export async function getMembersByChatId(chatId: number) {
-  const data = await sql`SELECT * FROM chat_members WHERE chat_id = ${chatId}`;
-  return data /* Retorna sem tipo nenhum */
+  const data = await sql(`
+    SELECT users.*
+    FROM users
+   INNER JOIN chat_members ON chat_members.user_id = users.id
+    WHERE chat_members.chat_id = ${chatId}
+    `);
+
+  const users: UserType[] = data.map((rawUser) => {
+    return ({
+      id: rawUser.id,
+      username: rawUser.username,
+      email: rawUser.email,
+      image_url: rawUser.image_url
+    })
+  })
+
+  return users
 }
 
-export async function getMessageById(messageId: number | null): Promise<MessageType | null> {
+export async function getMessageById(messageId: string | null): Promise<MessageType | null> {
   if (messageId === null) return null;
 
   const data = await sql`
@@ -85,7 +98,7 @@ export async function getMessageById(messageId: number | null): Promise<MessageT
     text: message.text,
     chat_id: message.chat_id,
     time: message.time,
-    date: new Date(message.date),
+    date: new Date(message.date).toString(),
   };
 }
 

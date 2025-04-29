@@ -11,12 +11,12 @@ import { getChatsByUserId } from '../lib/data';
 import CreateChat from '../ui/home/CreateChat';
 
 export default async function Home() {
-    const cookie  = await decrypt((await cookies()).get('session')?.value);
+    const cookie = await decrypt((await cookies()).get('session')?.value);
     if(cookie === undefined){
         redirect('/login');
     }
     const chats = await getChatsByUserId(cookie.user.id);
-    const user_image = cookie.user.image_url
+    const user_image = cookie.user.image_url;
 
     return (
         <>
@@ -42,10 +42,11 @@ export default async function Home() {
                 <Suspense fallback={<ChatListSkeleton />}>
                     <ol className='flex flex-col gap-5 mt-3'>
                         {
-                            chats ? chats.map((chat) => (<ChatItem key={chat.id} chat={chat} />)) : ''
+                            chats ? chats.reverse().map((chat) => (<ChatItem key={chat.id} chat={chat} />)) : ''
                         }
                     </ol>
                 </Suspense>
+                
                 <CreateChat/>
             </main>   
         </>

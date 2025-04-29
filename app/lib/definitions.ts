@@ -17,11 +17,13 @@ const FormSchema = z.object({
         })
 });
 export const chatSchema = z.object({
-    name: z.string().nonempty({
+    chat_name: z.string().nonempty({
         message: 'Chat name is required'
     }),
     image_url: z.string(),
-    members: z.string().array()
+    members: z.string().array().nonempty({
+        message: 'Chat members are required'
+    })
 })
 export const CreateUser = FormSchema.omit({ id: true });
 export const LoginUser = FormSchema.omit({ id: true, username: true });
@@ -40,15 +42,15 @@ export type ChatType = {
     id: number;
     name: string;
     image_url: string | null;
-    last_message: number | null;
+    last_message: MessageType['id'] | null;
 }
 export type MessageType = {
-    id: number;
-    user_id: string;
+    id: string;
+    user_id: UserType['id'];
     text: string;
-    chat_id: number;
+    chat_id: ChatType['id'];
     time: string; /* Mudar para um tipo mais correto */
-    date: Date
+    date: string
 }
 export type UserFormState = {
     errors?: {
