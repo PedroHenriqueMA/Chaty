@@ -1,10 +1,12 @@
+import { User } from "@geist-ui/icons"
+
 export function ChatListSkeleton() {
     return (
         <div>
             <div className="space-y-6 flex flex-col mt-3 justify-between w-[84vw] mx-[8vw]">
                 {[...Array(4)].map((_, index) => (
                     <div key={index} className="flex items-center justify-between space-x-4 ">
-                        <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+                        <User className="h-8 w-8 border-2 rounded-full animate-pulse" />
                         <div className="flex-1 space-y-2">
                             <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
                             <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse"></div>

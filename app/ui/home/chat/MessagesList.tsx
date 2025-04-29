@@ -18,20 +18,24 @@ export default function MessagesList({
     const [message, setMessage] = useState('');
     const [ws, setWs] = useState<WebSocket | null>(null);
     const [allMessages, setAllMessages] = useState(messages || []);
-
+    
     useEffect(() => {
+        window.scrollTo(0, document.body.scrollHeight);
+
         const socket = new WebSocket(process.env.NEXT_PUBLIC_WS_URL!);
         setWs(socket);
 
         socket.onmessage = (event) => {
             const newMessage = JSON.parse(event.data);
-            setAllMessages((prev) => [...prev, newMessage]);
+            if (newMessage.chat_id == chat_id) {
+                setAllMessages((prev) => [...prev, newMessage]);
+            }
         };
 
         return () => {
             socket.close();
         };
-    }, []);
+    }, [chat_id]);
 
     const sendMessage = async () => {
         if (ws?.readyState === WebSocket.OPEN && message !== '') {
@@ -51,9 +55,9 @@ export default function MessagesList({
                 time: messageTime,
                 date: messageDate
             }
-            await createMessage(messageObj)
-
+            await createMessage(messageObj);
             ws.send(JSON.stringify(messageObj));
+            window.scrollTo(0, document.body.scrollHeight);
             setMessage('');
         }
     };
@@ -76,8 +80,9 @@ export default function MessagesList({
                         : 'No messages found'
                 }
             </ol>
-            <div className="sticky bottom-[0] left-[calc(50vw-40vw-22.5px)] flex items-center justify-center space-x-[5px] py-4">
-                <div className="flex items-center bg-wine text-white w-[80vw] rounded-full px-4 py-2">
+            <div className="sticky bottom-[0] left-[calc(50vw-40vw-22.5px)] flex items-center justify-center space-x-[5px] pb-4 pt-2 mt-2 bg-[linear-gradient(rgba(var(--background-rgb),0),rgba(var(--background-rgb),0.8))] backdrop-blur-[1px]">
+
+                <div className="flex items-center z-10 bg-wine text-white w-[80vw] rounded-full px-4 py-2">
 
                     <button className="mr-3 pr-2 border-r-[1px]">
                         <Smile className="w-[20px] h-[20px]" />
@@ -88,6 +93,7 @@ export default function MessagesList({
                         type="text"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={(e) => e.key == 'Enter' ? sendMessage() : ''}
                         placeholder="message"
                         className="bg-transparent outline-none placeholder-white text-sm w-[100%] flex-wrap"
                     />
@@ -99,7 +105,7 @@ export default function MessagesList({
                 </div>
 
 
-                <button className="bg-wine p-[10px] rounded-full" onClick={sendMessage}>
+                <button className="bg-wine p-[10px] z-10 rounded-full" onClick={sendMessage}>
                     <Send className="w-[20px] h-[20px] rotate-[15deg]" />
                 </button>
             </div>

@@ -4,7 +4,11 @@
 
 :root {
   --background: #ffffff;
+  --background-rgb: 255, 255, 255;
   --foreground: #1b0a10;
+  --foreground-rgb: 27, 10, 16;
+  ;
+
   --wine: #6A283E;
   --salmon-light: #F38577;
   --salmon-default: #CB6359;
@@ -14,9 +18,9 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #1b0a10;
+    --background-rgb: 27, 10, 16;
     --foreground: #ffffff;
-    /* --background: #ffffff;
-    --foreground: #1b0a10; */
+    --foreground-rgb: 255, 255, 255;
   }
 }
 
