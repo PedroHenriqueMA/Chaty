@@ -98,7 +98,7 @@ export async function getMessageById(messageId: string | null): Promise<MessageT
     text: message.text,
     chat_id: message.chat_id,
     time: message.time,
-    date: new Date(message.date).toString(),
+    date: new Date(message.date),
   };
 }
 

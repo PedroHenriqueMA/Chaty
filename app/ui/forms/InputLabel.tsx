@@ -31,7 +31,7 @@ export default function InputLabel({ label, placeholder, type, name, errorName, 
             </label>
 
             <input
-                className={`rounded-xl py-[6px] px-3 w-[200px] text-black text-sm focus:outline-none focus:ring-0 ${props}
+                className={`rounded-xl py-[6px] px-3 w-[200px] text-black text-[16px] focus:outline-none focus:ring-0 ${props}
                     ${errors.length > 0 ?
                         "border-red-500 border-2"
                         : ""

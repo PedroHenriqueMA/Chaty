@@ -49,8 +49,8 @@ export type MessageType = {
     user_id: UserType['id'];
     text: string;
     chat_id: ChatType['id'];
-    time: string; /* Mudar para um tipo mais correto */
-    date: string
+    time: string;
+    date: Date
 }
 export type UserFormState = {
     errors?: {

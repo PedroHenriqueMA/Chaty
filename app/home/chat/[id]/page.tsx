@@ -1,14 +1,15 @@
 import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AlignJustify, User } from "@geist-ui/icons";
+import { User } from "@geist-ui/icons";
 import { getChatById, getMembersByChatId, getMessagesByChatId } from "@/app/lib/data";
 import { MessageType } from "@/app/lib/definitions";
 import { decrypt } from "@/app/lib/session";
 import { Suspense } from "react";
-import MessagesList from "@/app/ui/home/chat/MessagesList";
+import ChatMessages from "@/app/ui/home/chat/ChatMessages";
 import { MessageListSkeleton } from "@/app/ui/Skeletons";
 import ReturnButton from "@/app/ui/home/chat/ReturnButton";
+import MenuButton from "@/app/ui/home/chat/MenuButton";
 
 export default async function Chat({ params }: {
     params: Promise<{ id: number }>
@@ -25,22 +26,22 @@ export default async function Chat({ params }: {
 
     return (
         <>
-            <header className="sticky top-0 z-[100] flex justify-between px-5 py-5 border-b-2 border-yellow-50 bg-background">
+            <header className=" h-[10vh] top-0 z-[100] flex justify-between px-5 py-5 border-b-[1px] border-[var(--foreground)] bg-background">
                 <div className="flex gap-4 items-center">
-                    <ReturnButton /> {/* retornar para página anterior */}
+                    <ReturnButton/> 
                     {
                         image_url
                             ? (<Image src={image_url} alt='User avatar' width={35} height={35} className='w-[35px] h-[35px] rounded-full' />)
                             : (<User className='w-[35px] h-[35px] border-2 rounded-full' />)
 
                     }
-                    <p className="font-semibold text-2xl">{name}</p>
+                    <p className="font-semibold text-2xl hover:cursor-default">{name}</p>
                 </div>
-                <AlignJustify className='w-[30px] h-[30px]' />
+                <MenuButton/>
             </header>
             <main>
                 <Suspense fallback={<MessageListSkeleton/>}> {/* skeleton das mensagens */}
-                    {<MessagesList messages={messages} currentUser={cookie.user.id} chat_id={id} users={users}/>}
+                    {<ChatMessages messages={messages} currentUser={cookie.user.id} chat_id={id} users={users}/>}
                 </Suspense>
             </main>
 

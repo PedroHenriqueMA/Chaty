@@ -10,6 +10,6 @@ export default function ReturnButton() {
             setTimeout(() => {
                 router.refresh()
               }, 500)
-        }} className='w-[25px] h-[25px]' />
+        }} className='w-[25px] h-[25px] hover:cursor-pointer' />
     )
 }

@@ -2,13 +2,13 @@ import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { User, Search, AlignJustify } from '@geist-ui/icons';
+import { User, Search } from '@geist-ui/icons';
 import { ChatListSkeleton } from '../ui/Skeletons';
 import ChatItem from '../ui/home/Chat';
-import { logout } from '../lib/actions';
 import { decrypt } from '../lib/session';
 import { getChatsByUserId } from '../lib/data';
 import CreateChat from '../ui/home/CreateChat';
+import MenuButton from '../ui/home/chat/MenuButton';
 
 export default async function Home() {
     const cookie = await decrypt((await cookies()).get('session')?.value);
@@ -20,7 +20,7 @@ export default async function Home() {
 
     return (
         <>
-            <header className='flex align-center justify-between px-5 py-5 border-b-2 border-yellow-50'>
+            <header className='flex align-center justify-between px-5 py-5 border-b-[1px] border-[var(--foregound)]'>
                 {
                     user_image
                     ? (<Image src={user_image} alt='User avatar' width={35} height={35} className='w-[35px] h-[35px] rounded-full' />)
@@ -30,15 +30,10 @@ export default async function Home() {
             
                 <div className='flex align-center justify-center gap-4'>
                     <Search className='w-[30px] h-[30px]' />
-                    <AlignJustify className='w-[30px] h-[30px]' />
+                    <MenuButton/>
                 </div>
             </header>
             <main>
-
-                <button onClick={logout}>
-                    Logout
-                </button>
-
                 <Suspense fallback={<ChatListSkeleton />}>
                     <ol className='flex flex-col gap-5 mt-3'>
                         {
