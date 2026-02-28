@@ -2,7 +2,7 @@ import { AlignJustify, ArrowLeft } from "@geist-ui/icons";
 
 export default function Loading() {
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col min-h-[100dvh]">
 
             <div className="flex items-center gap-4 p-4 border-b border-gray-500">
                 <ArrowLeft color="gray" className=" animate-pulse "/>
