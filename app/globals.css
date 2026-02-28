@@ -47,14 +47,13 @@ body {
 }
 
 .scrollbar::-webkit-scrollbar-track {
-  background: var(--foreground);
+  background: transparent;
   border-radius: 5px;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--wine);
+  background-color: var(--foreground);
   border-radius: 10px;
-  border: 2px solid #f0f0f0;
 }
 
 @keyframes spin {
