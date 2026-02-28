@@ -2,7 +2,7 @@ import { AlignJustify, Search, User } from "@geist-ui/icons";
 
 export default function Loading() {
     return (
-        <div className="w-full h-screen overflow-y-auto">
+        <div className="w-full min-h-[100dvh] overflow-y-auto">
 
             <div className="flex items-center justify-between mb-6 p-4">
                 <User className="h-10 w-10 rounded-full animate-pulse"/>

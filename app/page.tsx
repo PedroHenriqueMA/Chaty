@@ -9,7 +9,7 @@ export default function Home() {
     setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
   },[])
   return (
-    <div className="flex h-[100vh] items-center justify-center flex-col gap-[5vh]">
+    <div className="flex min-h-[100dvh] items-center justify-center flex-col gap-[5vh]">
       <Image width={"150"} height={"200"} src={isDarkMode ? '/Logo-dark.png' : '/Logo.png'} alt="chaty logo" />
       <Image width={"250"} height={"250"} src={'/imageBackground.png'} alt="Background with people talking to each other by the cellphone" priority={true} />
       <div className="flex items-center justify-center flex-col gap-3">

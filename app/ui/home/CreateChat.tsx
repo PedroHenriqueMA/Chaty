@@ -45,7 +45,7 @@ export default function CreateChat() {
 
             {isOpen ? (
                 <>
-                    <div className="fixed z-2 top-0 left-0 w-[100vw] h-[100vh] bg-black opacity-75">
+                    <div className="fixed z-2 top-0 left-0 inset-0 bg-black opacity-75">
 
                     </div>
                     <form action={CreateChat}
