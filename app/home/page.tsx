@@ -23,7 +23,7 @@ export default async function Home() {
                 {
                     user_image
                     ? (<Image src={user_image} alt='User avatar' width={35} height={35} className='w-[35px] h-[35px] rounded-full' />)
-                    : (<User className='w-[35px] h-[35px] border-2 rounded-full' />)
+                    : (<User className='w-[35px] h-[35px] border-2 border-foreground rounded-full' />)
 
                 }
             

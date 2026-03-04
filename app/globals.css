@@ -30,19 +30,30 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .scrollbar::-webkit-scrollbar {
   width: 5px;
 }
 
 .scrollbar::-webkit-scrollbar-track {
-  background: var(--foreground);
+  background: transparent;
   border-radius: 5px;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--wine);
+  background-color: var(--foreground);
   border-radius: 10px;
-  border: 2px solid #f0f0f0;
 }
 
 @keyframes spin {

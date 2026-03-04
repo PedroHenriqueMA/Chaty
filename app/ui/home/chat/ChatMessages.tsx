@@ -141,7 +141,7 @@ export default function ChatMessages({
 
     return (
         <div className="h-[90vh] flex flex-col">
-            <ol ref={messagesRef} className="flex overflow-y-auto flex-col gap-4 min-h-[75vh] mt-[20px]">
+            <ol ref={messagesRef} className="flex overflow-y-auto flex-col gap-4 min-h-[75vh] mt-[20px] scrollbar">
                 <div className="my-[10px]">
                     <p className="text-center text-gray-500">There are no previous messages</p>
                 </div>

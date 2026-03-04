@@ -26,7 +26,7 @@ export function ChatListSkeleton() {
 }
 export function MessageListSkeleton() {
     return (
-        <div className="flex flex-col h-screen bg-[#2e1217]">
+        <div className="flex flex-col min-h-[100dvh] bg-[#2e1217]">
 
             <div className="flex items-center gap-4 p-4 border-b border-gray-500">
                 <div className="w-10 h-10 rounded-full bg-gray-700 animate-pulse"></div>

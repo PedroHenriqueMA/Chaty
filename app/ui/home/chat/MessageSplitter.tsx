@@ -36,7 +36,7 @@ export default function MessageSplitter({ date }: { date: Date }) {
     }
 
     return (
-        <div className="flex justify-center items-center w-[100vw] h-[1px] py-[15px] border-t-[1px] border-gray-500">
+        <div className="flex justify-center items-center w-full h-[1px] py-[15px] border-t-[1px] border-gray-500">
             <p className="text-center text-gray-500 text-[14px]">
                 {getLabel()}
             </p>
