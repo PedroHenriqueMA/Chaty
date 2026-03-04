@@ -1,18 +1,17 @@
 import Image from 'next/image';
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { User, Search } from '@geist-ui/icons';
 import { ChatListSkeleton } from '../ui/Skeletons';
 import ChatItem from '../ui/home/Chat';
-import { decrypt } from '../lib/session';
+import { getOptionalSession } from '../lib/session';
 import { getChatsByUserId } from '../lib/data';
 import CreateChat from '../ui/home/CreateChat';
 import MenuButton from '../ui/home/chat/MenuButton';
 
 export default async function Home() {
-    const cookie = await decrypt((await cookies()).get('session')?.value);
-    if(cookie === undefined){
+    const cookie = await getOptionalSession();
+    if(cookie === null){
         redirect('/login');
     }
     const chats = await getChatsByUserId(cookie.user.id);

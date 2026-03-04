@@ -1,12 +1,13 @@
 "use server";
 import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
-import { chatExist, getUserBy } from './data';
-import { ChatFormState, chatSchema, CreateUser, LoginUser, MessageType, UserFormState, UserType } from './definitions';
-import { createSession, decrypt, deleteSession } from './session';
+import { chatExist, getUserBy, isUserChatMember } from './data';
+import { ActionResult, ChatFormState, chatSchema, CreateUser, LoginUser, MessageType, UserFormState, UserType } from './definitions';
+import { createSession, decrypt, deleteSession, requireUser } from './session';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+import { handleActionError } from './errors';
 
 const sql = neon(process.env.DATABASE_URL ?? "");
 
@@ -63,7 +64,10 @@ export async function createUser(
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await sql(`INSERT INTO users (username, email, password) VALUES ('${username}', '${email}', '${hashedPassword}')`);
+        await sql`
+            INSERT INTO users (username, email, password)
+            VALUES (${username}, ${email}, ${hashedPassword})
+        `;
 
         const data: UserType | null = await getUserBy('email', email);
 
@@ -230,14 +234,98 @@ export async function createChat(
     };
 };
 
-export async function createMessage({id, text, user_id, chat_id, time, date}: MessageType) {
+export async function createMessage(
+  { text, chat_id }: { text: string; chat_id: number }
+): Promise<ActionResult<MessageType>> {
+    if (!(await isUserChatMember(chat_id))) {
+        return { success: false, error: "Unauthorized" };
+    }
     try {
+        const user = await requireUser();
+
+        const message_id = crypto.randomUUID();
+
+        const date = new Date().toLocaleString('en-US', {
+            hour12: false,
+            timeZone: 'America/Sao_Paulo'
+        }).split(',');
+
+        const message_date = date[0].trim();
+        const message_time = date[1].trim();
+
         await sql`INSERT INTO messages 
         (id, text, user_id, chat_id, time, date) 
-        VALUES (${id}, ${text}, ${user_id}, ${chat_id}, ${time}, ${date})`;
+        VALUES (${message_id}, ${text}, ${user.id}, ${chat_id}, ${message_time}, ${message_date})`;
 
-        await sql`UPDATE chats SET last_message = ${id} WHERE id = ${chat_id}`;
-    } catch (error) {
-        console.log(error);
+        await sql`UPDATE chats SET last_message = ${message_id} WHERE id = ${chat_id}`;
+
+        return {
+            success: true, data: {
+                id: message_id,
+                text,
+                user_id: user.id,
+                chat_id,
+                time: message_time,
+                date: new Date(message_date),
+            }
+        };
+    } catch (e) {
+        return handleActionError<MessageType>(e);
+    }
+}
+export async function editMessage({ id, text, chat_id }: { id: string, text: string, chat_id: number }) {
+    if (!(await isUserChatMember(chat_id))) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        const user = await requireUser();
+
+        await sql`
+        UPDATE messages
+        SET text = ${text}
+        WHERE 
+        id = ${id} AND 
+        chat_id = ${chat_id} AND
+        user_id = ${user.id}
+        `;
+        return { success: true };
+    } catch (e) {
+        return handleActionError(e);
+    }
+
+}
+
+export async function deleteMessage({ id, chat_id }: { id: string, chat_id: number }) {
+    if (!(await isUserChatMember(chat_id))) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    try {
+        const user = await requireUser();
+
+        await sql`
+        UPDATE chats 
+        SET last_message = (
+            SELECT id FROM messages
+                WHERE 
+                chat_id = ${chat_id} AND 
+                NOT (id = ${id})
+            ORDER BY date DESC, time DESC
+            LIMIT 1
+        )
+        WHERE id = ${chat_id}
+        `
+
+        await sql`
+        DELETE FROM messages 
+        WHERE 
+        id = ${id} AND
+        chat_id = ${chat_id} AND
+        user_id = ${user.id} 
+        `;
+        return { success: true };
+    } catch (e) {
+        return handleActionError(e);
     }
 }

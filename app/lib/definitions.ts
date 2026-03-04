@@ -28,6 +28,10 @@ export const chatSchema = z.object({
 export const CreateUser = FormSchema.omit({ id: true });
 export const LoginUser = FormSchema.omit({ id: true, username: true });
 
+export type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error?: string };
+
 export type ChatMembersType = {
     user_id: UserType['id'];
     chat_id: ChatType['id'];

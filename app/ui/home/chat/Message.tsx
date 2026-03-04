@@ -4,9 +4,11 @@ import { Delete, Edit3, User, X } from "@geist-ui/icons";
 import Image from "next/image";
 import { useRef, useState } from "react";
 
-export default function Message({ message, type, user }: { message: MessageType, type: "other" | "owner", user: UserType }) {
+export default function Message({ message, type, user, onEdit, onDelete }: { message: MessageType, type: "other" | "owner", user: UserType, onEdit: (id: string, newText: string) => void, onDelete: (id: string) => void }) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [showHold, setShowHold] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedText, setEditedText] = useState(message.text);
 
     const handleDown = () => {
         timeoutRef.current = setTimeout(() => {
@@ -40,14 +42,34 @@ export default function Message({ message, type, user }: { message: MessageType,
                 onTouchStart={handleDown}
                 onTouchEnd={handleUp}
                 className={`flex flex-col text-white mx-[5px] relative ${obj.li[type]}`} >
-                <div className={`relative flex justify-center items-center gap-2 ${type=='owner' ? 'hover:cursor-pointer' : 'hover:cursor-default'}`}>
+                <div className={`relative flex justify-center items-center gap-2 ${type == 'owner' ? 'hover:cursor-pointer' : 'hover:cursor-default'}`}>
                     {
                         type == 'owner'
                             ?
-                            <div className={` flex gap-4 px-4 py-2 max-w-[300px] min-w-[100px] rounded-3xl ${obj.div[type]}`}>
-                                <p className="text-sm min-w-[40%]" style={{overflowWrap: "anywhere"}}>
-                                    {message.text}
-                                </p>
+                            <div className={` flex gap-4 px-4 py-2 max-w-[300px] min-w-[100px] rounded-3xl ${obj.div[type]} ${isEditing ? 'bg-purple-800' : ''}`}>
+                                {isEditing ? (
+                                    <input
+                                        value={editedText}
+                                        onChange={(e) => setEditedText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                if(editedText.trim() === '' || editedText.trim() === message.text.trim()){
+                                                    setIsEditing(false);
+                                                    setEditedText(message.text);
+                                                    return;
+                                                };
+                                                onEdit(message.id, editedText);
+                                                setIsEditing(false);
+                                            }
+                                        }}
+                                        autoFocus={true}
+                                        className="bg-transparent outline-none text-sm"
+                                    />
+                                ) : (
+                                    <p className="text-sm" style={{ overflowWrap: "anywhere" }}>
+                                        {message.text}
+                                    </p>
+                                )}
                                 <p className=" text-xs self-end flex-bottom" >
                                     {message.time.substring(0, 5)}
                                 </p>
@@ -67,7 +89,7 @@ export default function Message({ message, type, user }: { message: MessageType,
                                     </p>
                                     <div className={` flex gap-4 px-4 py-2 max-w-[300px] min-w-[100px] rounded-3xl ${obj.div[type]}`}>
 
-                                        <p className="text-sm min-w-[40%]" style={{overflowWrap: "anywhere"}}>
+                                        <p className="text-sm min-w-[40%]" style={{ overflowWrap: "anywhere" }}>
                                             {message.text}
                                         </p>
                                         <p className=" text-xs self-end flex-bottom" >
@@ -85,13 +107,19 @@ export default function Message({ message, type, user }: { message: MessageType,
                         <X onClick={() => setShowHold(false)} className="flex self-end hover:cursor-pointer w-[20px]" />
                         <div className="flex flex-col justify-center align-center">
                             {
-                                <div onClick={()=> console.log('editei')} className="flex items-center gap-2 text-sm hover:cursor-pointer">
+                                <div onClick={() => {
+                                    setIsEditing(true);
+                                    setShowHold(false);
+                                }} className="flex items-center gap-2 text-sm hover:cursor-pointer">
                                     <Edit3 className="w-[10px]" />
                                     <span>edit</span>
                                 </div>
                             }
 
-                            <div onClick={() => console.log('deletei')} className="flex items-center gap-2 text-sm hover:cursor-pointer">
+                            <div onClick={() => {
+                                onDelete(message.id);
+                                setShowHold(false);
+                            }} className="flex items-center gap-2 text-sm hover:cursor-pointer">
                                 <Delete className="w-[10px]" />
                                 <span>delete</span>
                             </div>

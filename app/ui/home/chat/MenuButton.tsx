@@ -11,7 +11,7 @@ export default function MenuButton() {
             <AlignJustify onClick={() => SetShowMenu(true)} className='w-[30px] h-[30px] hover:cursor-pointer' />
             {
                 showMenu && (
-                    <div className="absolute right-0 flex flex-col gap-2 w-[150px] p-2 bg-salmon-dark text-white rounded-l-[20px]">
+                    <div className="absolute right-0 flex flex-col gap-2 w-[150px] p-2 bg-salmon-dark text-white rounded-l-[20px] z-10">
                         <div className="flex justify-between border-b-[1px] p-2 ">
                             <p className="text-lg">Menu</p>
                             <X onClick={() => SetShowMenu(false)} className="flex self-end w-[20px] hover:cursor-pointer" />

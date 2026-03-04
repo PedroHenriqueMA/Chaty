@@ -1,6 +1,8 @@
 'use server';
 import { neon } from '@neondatabase/serverless';
 import { MessageType, UserType, ChatType } from './definitions';
+import { requireUser } from './session';
+import { handleActionError } from './errors';
 const sql = neon(process.env.DATABASE_URL ?? "");
 
 export async function getUsers() {
@@ -79,6 +81,27 @@ export async function getMembersByChatId(chatId: number) {
   })
 
   return users
+}
+
+export async function isUserChatMember(chat_id: number): Promise<boolean> {
+  try {
+    const user = await requireUser();
+
+    const isMember = await sql`
+      SELECT 1 FROM chat_members
+      WHERE user_id = ${user.id}
+      AND chat_id = ${chat_id}
+    `;
+
+    if (isMember.length == 0) {
+      return false;
+    }
+
+    return true
+  } catch (e) {
+    handleActionError(e);
+    return false;
+  }
 }
 
 export async function getMessageById(messageId: string | null): Promise<MessageType | null> {

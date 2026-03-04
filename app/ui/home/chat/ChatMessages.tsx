@@ -2,7 +2,7 @@
 import { MessageType, UserType } from "@/app/lib/definitions";
 import Message from "./Message";
 import { useEffect, useState, Fragment, useRef } from "react";
-import { createMessage } from "@/app/lib/actions";
+import { createMessage, deleteMessage, editMessage } from "@/app/lib/actions";
 import { ArrowDownCircle, Paperclip, Send, Smile } from "@geist-ui/icons";
 import MessageSplitter from "./MessageSplitter";
 
@@ -17,7 +17,7 @@ export default function ChatMessages({
     messages, currentUser, chat_id, users
 }: MessagesProps) {
     const [message, setMessage] = useState('');
-    const [ws, setWs] = useState<WebSocket | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
     const [allMessages, setAllMessages] = useState(messages || []);
     const [showDownButton, setShowDownButton] = useState(false);
     const inputRef = useRef<HTMLDivElement>(null);
@@ -39,25 +39,46 @@ export default function ChatMessages({
 
     useEffect(() => {
         const socket = new WebSocket(process.env.NEXT_PUBLIC_WS_URL!);
-        setWs(socket);
+        wsRef.current = socket;
 
         socket.onmessage = (event) => {
-            const newMessage = JSON.parse(event.data);
-            if (newMessage.chat_id == chat_id) {
-                setAllMessages((prev) => [...prev, { 
-                    id: newMessage.id,
-                    user_id: newMessage.user_id, 
-                    chat_id: newMessage.chat_id,
-                    text: newMessage.text,
-                    time: newMessage.time,
-                    date: new Date(newMessage.date)
-                 }]);
+            const data = JSON.parse(event.data);
+
+            if (data.chat_id != chat_id) return;
+
+            switch (data.action) {
+                case 'create':
+                    const message: MessageType = {
+                        id: data.id,
+                        user_id: data.user_id,
+                        chat_id: data.chat_id,
+                        text: data.text,
+                        time: data.time,
+                        date: data.date,
+                    };
+                    setAllMessages((prev) => [...prev, message]);
+
+                    break;
+                case 'edit':
+                    setAllMessages((prev) => prev.map((message) => {
+                        if (message.id === data.id) {
+                            return {
+                                ...message,
+                                text: data.text,
+                            };
+                        }
+                        return message;
+                    }));
+                    break;
+                case 'delete':
+                    setAllMessages((prev) => prev.filter((message) => message.id !== data.id));
+                    break;
             }
         };
 
         return () => {
             socket.close();
-            console.log("desconcetou");
+            wsRef.current = null;
         };
     }, [chat_id]);
 
@@ -66,29 +87,57 @@ export default function ChatMessages({
     }, [allMessages]);
 
     const sendMessage = async () => {
-        if (ws?.readyState === WebSocket.OPEN && message !== '') {
-            const date = new Date().toLocaleString('en-US', {
-                hour12: false,
-                timeZone: 'America/Sao_Paulo'
-            }).split(',');
-
-            const messageDate = new Date(date[0].trim());
-            const messageTime = date[1].trim();
-
-            const messageObj = {
-                id: crypto.randomUUID(),
-                user_id: currentUser,
-                text: message,
-                chat_id: chat_id,
-                time: messageTime,
-                date: messageDate
+        if (wsRef.current?.readyState === WebSocket.OPEN && message !== '') {
+            const created = await createMessage({ text: message, chat_id });
+            if (!created?.success) {
+                alert('Failed to send message');
+                return;
             }
-            await createMessage(messageObj);
-            ws.send(JSON.stringify(messageObj));
+
+            wsRef.current.send(JSON.stringify({
+                action: 'create',
+                ...created.data,
+            }));
+
             inputRef.current?.scrollIntoView({ behavior: "smooth" });
             setMessage('');
         }
     };
+    const handleEdit = async (id: string, newText: string) => {
+        if (wsRef.current?.readyState === WebSocket.OPEN && newText != '') {
+            const edited = await editMessage({ id, text: newText, chat_id, });
+
+            if (!edited?.success) {
+                alert('Failed to edit message');
+                return;
+            }
+
+            wsRef.current.send(JSON.stringify({
+                action: 'edit',
+                id,
+                text: newText,
+                chat_id,
+            }));
+
+            setMessage('');
+        }
+    }
+
+    const handleDelete = async (id: string) => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            const deleted = await deleteMessage({ id, chat_id });
+            if (!deleted?.success) {
+                alert('Failed to delete message');
+                return;
+            }
+
+            wsRef.current.send(JSON.stringify({
+                action: 'delete',
+                id,
+                chat_id,
+            }));
+        }
+    }
 
     return (
         <div className="h-[90vh] flex flex-col">
@@ -104,12 +153,23 @@ export default function ChatMessages({
 
                             if (!messageAuthor) return null;
 
-                            const showMessageSplitter = !previousMessage || new Date(message.date).getDate() != new Date(previousMessage?.date).getDate();
+                            const showMessageSplitter = !previousMessage ||
+                                new Date(message.date).toDateString() !==
+                                new Date(previousMessage.date).toDateString();
 
                             return (
                                 <Fragment key={message.id}>
-                                    {showMessageSplitter && <MessageSplitter key={message.date.toString()} date={message.date} />}
-                                    <Message key={message.id} message={message} type={currentUser == message.user_id ? "owner" : "other"} user={messageAuthor} />
+                                    {showMessageSplitter && <MessageSplitter
+                                        key={`splitter-${message.date.toString()}-${index}`}
+                                        date={message.date} />}
+                                    <Message
+                                        key={message.id}
+                                        message={message}
+                                        type={currentUser == message.user_id ? "owner" : "other"}
+                                        user={messageAuthor}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                    />
                                 </Fragment>
                             )
                         })

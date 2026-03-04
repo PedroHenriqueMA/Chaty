@@ -1,10 +1,9 @@
 import Image from "next/image";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { User } from "@geist-ui/icons";
 import { getChatById, getMembersByChatId, getMessagesByChatId } from "@/app/lib/data";
 import { MessageType } from "@/app/lib/definitions";
-import { decrypt } from "@/app/lib/session";
+import {  getOptionalSession } from "@/app/lib/session";
 import { Suspense } from "react";
 import ChatMessages from "@/app/ui/home/chat/ChatMessages";
 import { MessageListSkeleton } from "@/app/ui/Skeletons";
@@ -17,9 +16,9 @@ export default async function Chat({ params }: {
     const { id } = await params;
     const { name, image_url } = await getChatById(id) || {};
     const users = await getMembersByChatId(id);
-    const cookie = await decrypt((await cookies()).get('session')?.value);
+    const cookie = await getOptionalSession();
 
-    if (cookie === undefined || !id) {
+    if (cookie === null || !id) {
         redirect('/login');
     }
     const messages: MessageType[] | null = await getMessagesByChatId(id);
